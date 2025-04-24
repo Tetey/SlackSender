@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+import dj_database_url
 
 # Load environment variables from .env file
 load_dotenv()
@@ -98,21 +99,24 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# Use persistent storage on Railway
-RAILWAY_DATA_DIR = os.environ.get('RAILWAY_VOLUME_MOUNT_PATH', '')
+# Use PostgreSQL on Railway and SQLite for local development
 
-# If running on Railway with persistent storage, use that for SQLite
-if RAILWAY_DATA_DIR:
-    SQLITE_DB_PATH = os.path.join(RAILWAY_DATA_DIR, 'db.sqlite3')
-else:
-    SQLITE_DB_PATH = BASE_DIR / 'db.sqlite3'
-
+# Default to SQLite for local development
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': SQLITE_DB_PATH,
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# If DATABASE_URL is provided (on Railway), use that instead
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if DATABASE_URL:
+    DATABASES['default'] = dj_database_url.config(
+        default=DATABASE_URL,
+        conn_max_age=600,
+        ssl_require=False,
+    )
 
 
 # Password validation
