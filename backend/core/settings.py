@@ -144,8 +144,13 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
     'https://slack-sender-pi.vercel.app',
+    'https://slacksender-production.up.railway.app',
 ]
 CORS_ALLOW_CREDENTIALS = True
+
+# For development, you can also allow all origins
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
 
 # REST Framework settings
 REST_FRAMEWORK = {
