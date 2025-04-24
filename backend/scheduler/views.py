@@ -167,9 +167,14 @@ class SlackTestMessageView(View):
         """
         Display a form for testing Slack message sending
         """
-        return HttpResponse("""
+        # Check if Slack token is configured
+        slack_token = getattr(settings, 'SLACK_BOT_TOKEN', None)
+        token_status = "✅ Configured" if slack_token else "❌ Not configured"
+        
+        return HttpResponse(f"""
             <h1>Test Slack Message</h1>
             <p>Make sure your bot is invited to the channel before sending a message.</p>
+            <p><strong>Slack Bot Token:</strong> {token_status}</p>
             <form method="post" action="">
                 <div style="margin-bottom: 15px;">
                     <label for="channel">Channel:</label>
@@ -192,7 +197,8 @@ class SlackTestMessageView(View):
         """
         Send a test message to Slack
         """
-        from .services import send_slack_message
+        from slack_sdk import WebClient
+        from slack_sdk.errors import SlackApiError
         
         channel = request.POST.get('channel', 'general')
         # Add # prefix if not already present and not an ID
@@ -201,7 +207,18 @@ class SlackTestMessageView(View):
             
         message = request.POST.get('message', 'Hello from Slack Scheduler!')
         
-        success = send_slack_message(message, channel)
+        # Try to get detailed error information
+        try:
+            client = WebClient(token=settings.SLACK_BOT_TOKEN)
+            client.chat_postMessage(channel=channel, text=message)
+            success = True
+            error_detail = None
+        except SlackApiError as e:
+            success = False
+            error_detail = str(e)
+        except Exception as e:
+            success = False
+            error_detail = f"Unexpected error: {str(e)}"
         
         if success:
             return HttpResponse(f"""
@@ -213,6 +230,7 @@ class SlackTestMessageView(View):
             return HttpResponse(f"""
                 <h1>Error</h1>
                 <p>Failed to send message to {channel}.</p>
+                <p>Error details: <pre style="background-color: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto;">{error_detail}</pre></p>
                 <p>Make sure your bot is invited to the channel.</p>
                 <p>For public channels, try using the format "#channel_name".</p>
                 <p>For private channels and DMs, use the channel/user ID.</p>
