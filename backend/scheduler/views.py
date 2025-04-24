@@ -82,3 +82,65 @@ class SlackAuthErrorView(View):
         Display an error message
         """
         return HttpResponse("<h1>Slack Authentication Failed</h1><p>There was an error authenticating with Slack. Please try again.</p>")
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class SlackTestMessageView(View):
+    """
+    View for testing Slack message sending
+    """
+    def get(self, request):
+        """
+        Display a form for testing Slack message sending
+        """
+        return HttpResponse("""
+            <h1>Test Slack Message</h1>
+            <p>Make sure your bot is invited to the channel before sending a message.</p>
+            <form method="post" action="">
+                <div style="margin-bottom: 15px;">
+                    <label for="channel">Channel:</label>
+                    <input type="text" id="channel" name="channel" value="general" required style="margin-left: 10px;">
+                    <p style="color: #666; margin-top: 5px; font-size: 0.9em;">
+                        Use channel name (e.g., "general") or ID. For direct messages, use a user ID.
+                    </p>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label for="message">Message:</label>
+                    <textarea id="message" name="message" required style="display: block; width: 300px; height: 100px; margin-top: 5px;">Hello from Slack Scheduler!</textarea>
+                </div>
+                <div>
+                    <button type="submit" style="background-color: #4A154B; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">Send Message</button>
+                </div>
+            </form>
+        """)
+    
+    def post(self, request):
+        """
+        Send a test message to Slack
+        """
+        from .services import send_slack_message
+        
+        channel = request.POST.get('channel', 'general')
+        # Add # prefix if not already present and not an ID
+        if not channel.startswith(('#', 'C', 'D', 'G', 'U')):
+            channel = f"#{channel}"
+            
+        message = request.POST.get('message', 'Hello from Slack Scheduler!')
+        
+        success = send_slack_message(message, channel)
+        
+        if success:
+            return HttpResponse(f"""
+                <h1>Success!</h1>
+                <p>Message sent to {channel}.</p>
+                <p><a href='/api/slack/test-message/'>Send another message</a></p>
+            """)
+        else:
+            return HttpResponse(f"""
+                <h1>Error</h1>
+                <p>Failed to send message to {channel}.</p>
+                <p>Make sure your bot is invited to the channel.</p>
+                <p>For public channels, try using the format "#channel_name".</p>
+                <p>For private channels and DMs, use the channel/user ID.</p>
+                <p><a href='/api/slack/test-message/'>Try again</a></p>
+            """)

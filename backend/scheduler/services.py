@@ -13,30 +13,17 @@ logger = logging.getLogger(__name__)
 
 def get_slack_client():
     """
-    Get a Slack WebClient instance
+    Get a Slack client instance with the configured token
     """
-    token = settings.SLACK_API_TOKEN
-    if not token:
-        logger.error("No Slack API token found in settings")
-        return None
-    
-    return WebClient(token=token)
+    return WebClient(token=settings.SLACK_API_TOKEN)
 
 def send_slack_message(message, channel):
     """
-    Send a message to a Slack channel using the Slack API
+    Send a message to a Slack channel
     """
     client = get_slack_client()
-    if not client:
-        logger.error("Failed to initialize Slack client")
-        return False
-    
     try:
-        # Call the chat.postMessage method using the WebClient
-        result = client.chat_postMessage(
-            channel=channel,
-            text=message
-        )
+        result = client.chat_postMessage(channel=channel, text=message)
         logger.info(f"Message sent to {channel}: {result}")
         return True
     except SlackApiError as e:

@@ -5,7 +5,8 @@ from .views import (
     SlackAuthView, 
     SlackOAuthCallbackView,
     SlackAuthSuccessView,
-    SlackAuthErrorView
+    SlackAuthErrorView,
+    SlackTestMessageView
 )
 
 router = DefaultRouter()
@@ -17,4 +18,5 @@ urlpatterns = [
     path('slack/oauth-callback/', SlackOAuthCallbackView.as_view(), name='slack_oauth_callback'),
     path('slack/auth-success/', SlackAuthSuccessView.as_view(), name='slack_auth_success'),
     path('slack/auth-error/', SlackAuthErrorView.as_view(), name='slack_auth_error'),
+    path('slack/test-message/', SlackTestMessageView.as_view(), name='slack_test_message'),
 ]

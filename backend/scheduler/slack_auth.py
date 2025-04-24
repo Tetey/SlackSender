@@ -20,14 +20,20 @@ os.makedirs('slack_state', exist_ok=True)
 installation_store = FileInstallationStore(base_dir='slack_installation')
 state_store = FileOAuthStateStore(expiration_seconds=300, base_dir='slack_state')
 
+# Use ngrok URL for Slack OAuth
+NGROK_URL = "https://cb4b-124-217-62-119.ngrok-free.app"
+
 def get_authorize_url(request):
     """
     Generate a Slack OAuth authorization URL
     """
+    # Use ngrok URL for redirect in development
+    redirect_uri = f"{NGROK_URL}/api/slack/oauth-callback/"
+    
     authorize_url_generator = AuthorizeUrlGenerator(
         client_id=settings.SLACK_CLIENT_ID,
         scopes=["chat:write", "channels:read", "groups:read"],
-        redirect_uri=request.build_absolute_uri(reverse('slack_oauth_callback')),
+        redirect_uri=redirect_uri,
     )
     
     # Generate a state parameter for CSRF protection
@@ -61,13 +67,29 @@ def handle_oauth_callback(request):
     client = WebClient()
     
     try:
+        # Use ngrok URL for redirect in development
+        redirect_uri = f"{NGROK_URL}/api/slack/oauth-callback/"
+        
         # Complete the OAuth flow
         oauth_response = client.oauth_v2_access(
             client_id=settings.SLACK_CLIENT_ID,
             client_secret=settings.SLACK_CLIENT_SECRET,
             code=code,
-            redirect_uri=request.build_absolute_uri(reverse('slack_oauth_callback')),
+            redirect_uri=redirect_uri,
         )
+        
+        # Log the full OAuth response for debugging
+        logger.info(f"OAuth response: {oauth_response}")
+        
+        # Extract the refresh token if available
+        refresh_token = oauth_response.get("refresh_token", "")
+        if refresh_token:
+            # In a production environment, you would securely store this
+            # For now, we'll log it (not recommended for production)
+            logger.info(f"Received refresh token: {refresh_token}")
+            
+            # You might want to update your .env file or store in a secure database
+            # For this example, we'll just use the one from settings
         
         # Save the installation
         installation = Installation(
@@ -82,6 +104,8 @@ def handle_oauth_callback(request):
             user_token=oauth_response.get("authed_user", {}).get("access_token"),
             user_scopes=oauth_response.get("authed_user", {}).get("scope", "").split(","),
             installed_at=oauth_response.get("installer_user_id"),
+            # Store the refresh token in the installation
+            user_refresh_token=refresh_token,
         )
         installation_store.save(installation)
         

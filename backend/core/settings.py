@@ -148,6 +148,7 @@ SLACK_API_TOKEN = os.getenv('SLACK_API_TOKEN', '')
 SLACK_SIGNING_SECRET = os.getenv('SLACK_SIGNING_SECRET', '')
 SLACK_CLIENT_ID = os.getenv('SLACK_CLIENT_ID', '')
 SLACK_CLIENT_SECRET = os.getenv('SLACK_CLIENT_SECRET', '')
+SLACK_REFRESH_TOKEN = os.getenv('SLACK_REFRESH_TOKEN', '')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
