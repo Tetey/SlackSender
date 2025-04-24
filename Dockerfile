@@ -4,7 +4,8 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=off \
-    PIP_DISABLE_PIP_VERSION_CHECK=on
+    PIP_DISABLE_PIP_VERSION_CHECK=on \
+    PORT=8080
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -31,12 +32,13 @@ echo "Collecting static files..."\n\
 python manage.py collectstatic --noinput\n\
 \n\
 echo "Starting application..."\n\
-exec gunicorn core.wsgi:application --bind 0.0.0.0:$PORT\n\
+echo "Using PORT: $PORT"\n\
+exec gunicorn core.wsgi:application --bind 0.0.0.0:$PORT --timeout 120\n\
 ' > /app/entrypoint.sh && \
     chmod +x /app/entrypoint.sh
 
 # Expose port
-EXPOSE 8000
+EXPOSE $PORT
 
 # Run the application
 CMD ["/app/entrypoint.sh"]

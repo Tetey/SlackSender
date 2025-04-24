@@ -1,5 +1,5 @@
 from rest_framework import viewsets, status
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from django.shortcuts import redirect
 from django.http import HttpResponse, JsonResponse
@@ -13,6 +13,14 @@ from .serializers import ScheduledMessageSerializer
 from .slack_auth import get_authorize_url, handle_oauth_callback
 
 # Create your views here.
+
+# Health check endpoint for Railway
+@api_view(['GET'])
+def health_check(request):
+    """
+    Simple health check endpoint for Railway
+    """
+    return Response({"status": "ok", "message": "Service is healthy"}, status=status.HTTP_200_OK)
 
 class ScheduledMessageViewSet(viewsets.ModelViewSet):
     """

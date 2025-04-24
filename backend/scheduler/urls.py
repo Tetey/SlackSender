@@ -1,18 +1,14 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from django.http import JsonResponse
 from . import views
 
-# Simple health check view for Railway
-def health_check(request):
-    return JsonResponse({"status": "ok"})
-
+# Router setup for DRF viewsets
 router = DefaultRouter()
 router.register(r'messages', views.ScheduledMessageViewSet, basename='message')
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('health/', health_check, name='health_check'),  # Health check endpoint
+    path('health/', views.health_check, name='health_check'),  # Updated health check endpoint
     path('slack/auth/', views.SlackAuthView.as_view(), name='slack_auth'),
     path('slack/auth-url/', views.SlackAuthUrlView.as_view(), name='slack_auth_url'),
     path('slack/oauth-callback/', views.SlackOAuthCallbackView.as_view(), name='slack_oauth_callback'),
