@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import SlackAuthButton from '../components/SlackAuthButton';
+import SlackMessageSender from '../components/SlackMessageSender';
 
 const HomePage: React.FC = () => {
   return (
@@ -19,7 +20,7 @@ const HomePage: React.FC = () => {
           </p>
         </div>
         
-        <div className="flex justify-center space-x-4">
+        <div className="flex justify-center space-x-4 mb-8">
           <Link
             to="/messages"
             className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
@@ -32,6 +33,11 @@ const HomePage: React.FC = () => {
           >
             Schedule New Message
           </Link>
+        </div>
+
+        {/* Slack Message Sender */}
+        <div className="max-w-2xl mx-auto mb-12">
+          <SlackMessageSender />
         </div>
         
         <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">

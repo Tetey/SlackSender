@@ -15,7 +15,7 @@ def get_slack_client():
     """
     Get a Slack client instance with the configured token
     """
-    return WebClient(token=settings.SLACK_API_TOKEN)
+    return WebClient(token=settings.SLACK_BOT_TOKEN)
 
 def send_slack_message(message, channel):
     """

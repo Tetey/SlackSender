@@ -37,6 +37,39 @@ class ScheduledMessageViewSet(viewsets.ModelViewSet):
         except ScheduledMessage.DoesNotExist:
             return Response({'error': 'Message not found'}, status=status.HTTP_404_NOT_FOUND)
 
+    @action(detail=False, methods=['post'])
+    def send_slack_message(self, request):
+        """
+        Endpoint to send a message to Slack immediately
+        """
+        from .services import send_slack_message
+        
+        channel = request.data.get('channel')
+        message = request.data.get('message')
+        
+        if not channel or not message:
+            return Response(
+                {'error': 'Both channel and message are required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Add # prefix if not already present and not an ID
+        if not channel.startswith(('#', 'C', 'D', 'G', 'U')):
+            channel = f"#{channel}"
+            
+        success = send_slack_message(message, channel)
+        
+        if success:
+            return Response(
+                {'status': 'Message sent successfully'}, 
+                status=status.HTTP_200_OK
+            )
+        else:
+            return Response(
+                {'error': 'Failed to send message to Slack'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 
 class SlackAuthView(View):
     """
