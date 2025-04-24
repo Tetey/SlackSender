@@ -12,6 +12,10 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,10 +25,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-dum3dlerg+@%zw$!$+aoh270xkx_^=&ufnqc^nzr(-r%*81_ym'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dum3dlerg+@%zw$!$+aoh270xkx_^=&ufnqc^nzr(-r%*81_ym')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
+
+# Get Railway domain if available
+RAILWAY_DOMAIN = os.getenv('RAILWAY_PUBLIC_DOMAIN', '')
 
 ALLOWED_HOSTS = [
     'localhost',
@@ -32,6 +39,10 @@ ALLOWED_HOSTS = [
     'slacksender-production.up.railway.app',
     '.up.railway.app',  # Allow all Railway subdomains
 ]
+
+# Add Railway domain if available
+if RAILWAY_DOMAIN:
+    ALLOWED_HOSTS.append(RAILWAY_DOMAIN)
 
 
 # Application definition
@@ -142,6 +153,29 @@ STATIC_URL = 'static/'
 # CORS settings
 CORS_ALLOW_ALL_ORIGINS = True  # For development only, restrict in production
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "https://slack-sender-pi.vercel.app",
+]
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 # REST Framework settings
 REST_FRAMEWORK = {
