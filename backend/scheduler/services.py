@@ -35,14 +35,23 @@ def process_scheduled_messages():
     Process all due scheduled messages
     This would typically be run by a scheduler like Celery
     """
+    now = timezone.now()
+    logger.info(f"Processing scheduled messages at {now}")
+    
+    # Get all pending messages that are due
     due_messages = ScheduledMessage.objects.filter(
         status='pending',
-        scheduled_time__lte=timezone.now()
+        scheduled_time__lte=now
     )
     
+    logger.info(f"Found {due_messages.count()} messages to process")
+    
     for message in due_messages:
+        logger.info(f"Processing message {message.id} to channel {message.channel}")
+        
         try:
             success = send_slack_message(message.message, message.channel)
+            
             if success:
                 message.status = 'sent'
                 message.save()
@@ -54,6 +63,7 @@ def process_scheduled_messages():
         except Exception as e:
             message.status = 'failed'
             message.save()
-            logger.exception(f"Error sending message {message.id}: {str(e)}")
+            logger.error(f"Error processing message {message.id}: {str(e)}")
     
-    return len(due_messages)
+    logger.info("Finished processing scheduled messages")
+    return due_messages.count()

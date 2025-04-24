@@ -46,9 +46,11 @@ INSTALLED_APPS = [
     # Third party apps
     'rest_framework',
     'corsheaders',
+    'django_celery_beat',  # Add django_celery_beat to installed apps
     
     # Local apps
     'scheduler',
+    'celery',  # Add celery to installed apps
 ]
 
 MIDDLEWARE = [
@@ -149,6 +151,17 @@ SLACK_SIGNING_SECRET = os.getenv('SLACK_SIGNING_SECRET', '')
 SLACK_CLIENT_ID = os.getenv('SLACK_CLIENT_ID', '')
 SLACK_CLIENT_SECRET = os.getenv('SLACK_CLIENT_SECRET', '')
 SLACK_REFRESH_TOKEN = os.getenv('SLACK_REFRESH_TOKEN', '')
+
+# Celery Configuration
+CELERY_BROKER_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+
+# Celery Beat Settings
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

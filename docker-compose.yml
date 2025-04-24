@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  # Django web application
+  web:
+    build: ./backend
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8001:8000"
+    environment:
+      - DEBUG=True
+      - REDIS_URL=redis://redis:6379/0
+      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
+      - SLACK_SIGNING_SECRET=${SLACK_SIGNING_SECRET}
+      - SLACK_CLIENT_ID=${SLACK_CLIENT_ID}
+      - SLACK_CLIENT_SECRET=${SLACK_CLIENT_SECRET}
+      - SLACK_REFRESH_TOKEN=${SLACK_REFRESH_TOKEN}
+    env_file:
+      - .env.docker
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # Celery worker
+  celery:
+    build: ./backend
+    command: celery -A core worker -l INFO
+    volumes:
+      - ./backend:/app
+    environment:
+      - DEBUG=True
+      - REDIS_URL=redis://redis:6379/0
+      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
+      - SLACK_SIGNING_SECRET=${SLACK_SIGNING_SECRET}
+      - SLACK_CLIENT_ID=${SLACK_CLIENT_ID}
+      - SLACK_CLIENT_SECRET=${SLACK_CLIENT_SECRET}
+      - SLACK_REFRESH_TOKEN=${SLACK_REFRESH_TOKEN}
+    env_file:
+      - .env.docker
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # Celery beat scheduler
+  celery-beat:
+    build: ./backend
+    command: celery -A core beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - ./backend:/app
+    environment:
+      - DEBUG=True
+      - REDIS_URL=redis://redis:6379/0
+      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
+      - SLACK_SIGNING_SECRET=${SLACK_SIGNING_SECRET}
+      - SLACK_CLIENT_ID=${SLACK_CLIENT_ID}
+      - SLACK_CLIENT_SECRET=${SLACK_CLIENT_SECRET}
+      - SLACK_REFRESH_TOKEN=${SLACK_REFRESH_TOKEN}
+    env_file:
+      - .env.docker
+    depends_on:
+      - redis
+      - web
+    restart: unless-stopped
+
+  # Redis (message broker)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    restart: unless-stopped
+
+  # Frontend React application
+  frontend:
+    build: ./frontend
+    command: npm start
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3001:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8001
+    depends_on:
+      - web
+    restart: unless-stopped
