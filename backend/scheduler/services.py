@@ -3,26 +3,45 @@ Service for handling scheduled message sending
 """
 import logging
 from django.utils import timezone
+from django.conf import settings
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
 
 from .models import ScheduledMessage
 
 logger = logging.getLogger(__name__)
 
+def get_slack_client():
+    """
+    Get a Slack WebClient instance
+    """
+    token = settings.SLACK_API_TOKEN
+    if not token:
+        logger.error("No Slack API token found in settings")
+        return None
+    
+    return WebClient(token=token)
+
 def send_slack_message(message, channel):
     """
-    Send a message to a Slack channel
-    In a real application, this would use the Slack API
+    Send a message to a Slack channel using the Slack API
     """
-    # This is a placeholder for actual Slack API integration
-    # In a real application, you would use the Slack SDK or API
-    # Example:
-    # slack_token = settings.SLACK_API_TOKEN
-    # client = WebClient(token=slack_token)
-    # response = client.chat_postMessage(channel=channel, text=message)
+    client = get_slack_client()
+    if not client:
+        logger.error("Failed to initialize Slack client")
+        return False
     
-    # For this demo, we'll just simulate a successful send
-    logger.info(f"Sending message to {channel}: {message}")
-    return True
+    try:
+        # Call the chat.postMessage method using the WebClient
+        result = client.chat_postMessage(
+            channel=channel,
+            text=message
+        )
+        logger.info(f"Message sent to {channel}: {result}")
+        return True
+    except SlackApiError as e:
+        logger.error(f"Error sending message to Slack: {e}")
+        return False
 
 def process_scheduled_messages():
     """

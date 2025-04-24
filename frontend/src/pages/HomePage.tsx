@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
+import SlackAuthButton from '../components/SlackAuthButton';
 
 const HomePage: React.FC = () => {
   return (
@@ -10,6 +11,13 @@ const HomePage: React.FC = () => {
         <p className="text-xl text-gray-600 mb-8">
           Schedule messages to be sent to your Slack channels at specific times.
         </p>
+        
+        <div className="flex flex-col items-center space-y-4 mb-8">
+          <SlackAuthButton />
+          <p className="text-sm text-gray-500">
+            Connect your Slack workspace to start scheduling messages.
+          </p>
+        </div>
         
         <div className="flex justify-center space-x-4">
           <Link
