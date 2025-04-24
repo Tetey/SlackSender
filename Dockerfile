@@ -22,11 +22,21 @@ RUN pip install --upgrade pip && \
 # Copy project
 COPY backend/ .
 
-# Collect static files
-RUN python manage.py collectstatic --noinput
+# Create entrypoint script
+RUN echo '#!/bin/bash\n\
+echo "Running migrations..."\n\
+python manage.py migrate\n\
+\n\
+echo "Collecting static files..."\n\
+python manage.py collectstatic --noinput\n\
+\n\
+echo "Starting application..."\n\
+exec gunicorn core.wsgi:application --bind 0.0.0.0:$PORT\n\
+' > /app/entrypoint.sh && \
+    chmod +x /app/entrypoint.sh
 
 # Expose port
 EXPOSE 8000
 
 # Run the application
-CMD ["gunicorn", "core.wsgi:application", "--bind", "0.0.0.0:8000"]
+CMD ["/app/entrypoint.sh"]
