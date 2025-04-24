@@ -1,0 +1,44 @@
+import axios from 'axios';
+import { ScheduledMessage } from '../types';
+
+const API_URL = 'http://localhost:8000/api';
+
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+export const messageService = {
+  getMessages: async (): Promise<ScheduledMessage[]> => {
+    const response = await api.get('/messages/');
+    return response.data;
+  },
+  
+  getMessage: async (id: number): Promise<ScheduledMessage> => {
+    const response = await api.get(`/messages/${id}/`);
+    return response.data;
+  },
+  
+  createMessage: async (message: ScheduledMessage): Promise<ScheduledMessage> => {
+    const response = await api.post('/messages/', message);
+    return response.data;
+  },
+  
+  updateMessage: async (id: number, message: ScheduledMessage): Promise<ScheduledMessage> => {
+    const response = await api.put(`/messages/${id}/`, message);
+    return response.data;
+  },
+  
+  deleteMessage: async (id: number): Promise<void> => {
+    await api.delete(`/messages/${id}/`);
+  },
+  
+  sendMessage: async (id: number): Promise<any> => {
+    const response = await api.post('/messages/send_message/', { id });
+    return response.data;
+  }
+};
+
+export default api;
