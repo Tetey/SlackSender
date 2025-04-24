@@ -23,20 +23,43 @@ class ScheduledMessageViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'])
     def send_message(self, request):
         """
-        Endpoint to simulate sending a message to Slack
-        In a real application, this would integrate with the Slack API
+        Endpoint to send a scheduled message immediately
         """
+        from .services import send_slack_message
+        
         message_id = request.data.get('id')
+        if not message_id:
+            return Response(
+                {'error': 'Message ID is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
         try:
             message = ScheduledMessage.objects.get(id=message_id)
-            # In a real application, we would send the message to Slack here
-            # For now, we'll just update the status
-            message.status = 'sent'
-            message.save()
-            return Response({'status': 'Message sent successfully'}, status=status.HTTP_200_OK)
+            success = send_slack_message(message.message, message.channel)
+            
+            if success:
+                # Update the message status
+                message.status = 'sent'
+                message.save()
+                return Response(
+                    {'status': 'Message sent successfully'}, 
+                    status=status.HTTP_200_OK
+                )
+            else:
+                # Update the message status
+                message.status = 'failed'
+                message.save()
+                return Response(
+                    {'error': 'Failed to send message to Slack'}, 
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
         except ScheduledMessage.DoesNotExist:
-            return Response({'error': 'Message not found'}, status=status.HTTP_404_NOT_FOUND)
-
+            return Response(
+                {'error': 'Message not found'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+    
     @action(detail=False, methods=['post'])
     def send_slack_message(self, request):
         """
