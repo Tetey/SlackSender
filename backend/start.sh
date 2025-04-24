@@ -2,42 +2,30 @@
 
 echo "Starting application setup..."
 
-# Check for Railway persistent storage
-RAILWAY_DATA_DIR="${RAILWAY_VOLUME_MOUNT_PATH:-/data}"
-echo "Checking for persistent storage at $RAILWAY_DATA_DIR"
-if [ ! -d "$RAILWAY_DATA_DIR" ]; then
-    echo "Creating persistent storage directory..."
-    mkdir -p "$RAILWAY_DATA_DIR"
-fi
-
 # Apply database migrations
 echo "Applying database migrations..."
 python manage.py migrate
 python manage.py migrate django_celery_beat
 
-# Check if scheduler_scheduledmessage table exists and has data
+# Check if scheduler_scheduledmessage table exists
 echo "Checking database tables..."
-DB_PATH="${RAILWAY_DATA_DIR}/db.sqlite3"
-if [ ! -f "$DB_PATH" ]; then
-    DB_PATH="db.sqlite3"
-fi
-
-TABLE_COUNT=$(python -c "
-import sqlite3
+TABLE_EXISTS=$(python -c "
 import os
-db_path = '$DB_PATH'
-if os.path.exists(db_path):
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    cursor.execute(\"SELECT name FROM sqlite_master WHERE type='table' AND name='scheduler_scheduledmessage'\")
+import django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+django.setup()
+from django.db import connection
+cursor = connection.cursor()
+try:
+    cursor.execute(\"SELECT 1 FROM information_schema.tables WHERE table_name='scheduler_scheduledmessage'\")
     result = cursor.fetchone()
     print(1 if result else 0)
-    conn.close()
-else:
+except Exception as e:
+    print(f'Error checking table: {e}')
     print(0)
 ")
 
-if [ "$TABLE_COUNT" -eq 0 ]; then
+if [ "$TABLE_EXISTS" -eq 0 ]; then
     echo "Table scheduler_scheduledmessage does not exist. Migrations may have failed."
     echo "Attempting to create table manually..."
     python manage.py migrate scheduler
@@ -51,3 +39,4 @@ python manage.py runserver 0.0.0.0:$PORT
 # based on the Procfile configuration:
 # worker: celery -A core worker --loglevel=info
 # beat: celery -A core beat --loglevel=info
+# scheduler: python scheduler_runner.py
