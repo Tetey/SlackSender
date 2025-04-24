@@ -1,40 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
 
 // Use environment variable with fallback
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 const SlackAuthButton: React.FC = () => {
-  const [authUrl, setAuthUrl] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchAuthUrl = async () => {
-      try {
-        setIsLoading(true);
-        // Fetch the auth URL from the backend
-        const response = await axios.get(`${API_BASE_URL}/api/slack/auth-url/`);
-        setAuthUrl(response.data.url);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching Slack auth URL:', err);
-        setError('Failed to load Slack authentication URL');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchAuthUrl();
-  }, []);
-
   const handleAuth = () => {
-    // Redirect to Slack OAuth page
-    if (authUrl) {
-      window.location.href = authUrl;
-    } else {
-      setError('Authentication URL not available. Please try again later.');
-    }
+    // Redirect directly to the Slack auth endpoint on our backend
+    // The backend will handle constructing the proper Slack OAuth URL
+    window.location.href = `${API_BASE_URL}/api/slack/auth/`;
   };
 
   if (isLoading) {
