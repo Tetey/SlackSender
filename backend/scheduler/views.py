@@ -29,6 +29,39 @@ class ScheduledMessageViewSet(viewsets.ModelViewSet):
     queryset = ScheduledMessage.objects.all().order_by('-scheduled_time')
     serializer_class = ScheduledMessageSerializer
     
+    @action(detail=True, methods=['post'])
+    def send(self, request, pk=None):
+        """
+        Endpoint to send a specific scheduled message immediately
+        """
+        from .services import send_slack_message
+        
+        try:
+            message = self.get_object()
+            success = send_slack_message(message.message, message.channel)
+            
+            if success:
+                # Update the message status
+                message.status = 'sent'
+                message.save()
+                return Response(
+                    {'status': 'Message sent successfully'}, 
+                    status=status.HTTP_200_OK
+                )
+            else:
+                # Update the message status
+                message.status = 'failed'
+                message.save()
+                return Response(
+                    {'error': 'Failed to send message to Slack'}, 
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
     @action(detail=False, methods=['post'])
     def send_message(self, request):
         """
