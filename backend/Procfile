@@ -1,3 +1,4 @@
 web: bash start.sh
 worker: celery -A core worker --loglevel=info
 beat: celery -A core beat --loglevel=info
+scheduler: python scheduler_runner.py
