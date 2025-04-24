@@ -151,11 +151,15 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 # CORS settings
-CORS_ALLOW_ALL_ORIGINS = False  # More secure for production
+CORS_ALLOW_ALL_ORIGINS = False  # Keep security for production
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "https://slack-sender-pi.vercel.app",
+]
+CORS_EXPOSE_HEADERS = [
+    'content-type',
+    'content-length',
 ]
 CORS_ALLOW_METHODS = [
     'DELETE',
