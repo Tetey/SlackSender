@@ -16,8 +16,8 @@ WORKDIR /app
 
 # Install Python dependencies
 COPY backend/requirements.txt .
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+RUN python3 -m pip install --upgrade pip && \
+    python3 -m pip install --no-cache-dir -r requirements.txt
 
 # Copy project
 COPY backend/ .
@@ -25,13 +25,13 @@ COPY backend/ .
 # Create entrypoint script
 RUN echo '#!/bin/bash\n\
 echo "Running migrations..."\n\
-python manage.py migrate\n\
+python3 manage.py migrate\n\
 \n\
 echo "Collecting static files..."\n\
-python manage.py collectstatic --noinput\n\
+python3 manage.py collectstatic --noinput\n\
 \n\
 echo "Starting application..."\n\
-python -m gunicorn core.wsgi:application --bind 0.0.0.0:$PORT --timeout 120\n\
+python3 -m gunicorn core.wsgi:application --bind 0.0.0.0:$PORT --timeout 120\n\
 ' > /app/entrypoint.sh && \
     chmod +x /app/entrypoint.sh
 
