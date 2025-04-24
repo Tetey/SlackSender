@@ -13,6 +13,7 @@ fi
 # Apply database migrations
 echo "Applying database migrations..."
 python manage.py migrate
+python manage.py migrate django_celery_beat
 
 # Check if scheduler_scheduledmessage table exists and has data
 echo "Checking database tables..."
