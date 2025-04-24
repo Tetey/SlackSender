@@ -2,9 +2,7 @@ FROM python:3.11-slim
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=off \
-    PIP_DISABLE_PIP_VERSION_CHECK=on
+    PYTHONUNBUFFERED=1
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -17,23 +15,13 @@ WORKDIR /app
 # Install Python dependencies
 COPY requirements.txt .
 RUN python3 -m pip install --upgrade pip && \
-    python3 -m pip install --no-cache-dir -r requirements.txt
+    python3 -m pip install --no-cache-dir -r requirements.txt gunicorn
 
 # Copy project
 COPY . .
 
-# Create entrypoint script
-RUN echo '#!/bin/bash\n\
-echo "Running migrations..."\n\
-python3 manage.py migrate\n\
-\n\
-echo "Collecting static files..."\n\
-python3 manage.py collectstatic --noinput\n\
-\n\
-echo "Starting application..."\n\
-python3 -m gunicorn core.wsgi:application --bind 0.0.0.0:$PORT --timeout 120\n\
-' > /app/entrypoint.sh && \
-    chmod +x /app/entrypoint.sh
+# Run migrations and collect static files
+RUN python3 manage.py collectstatic --noinput
 
-# Run the application
-CMD ["/app/entrypoint.sh"]
+# Start command
+CMD python3 manage.py migrate && python3 -m gunicorn core.wsgi:application --bind 0.0.0.0:$PORT --timeout 120
