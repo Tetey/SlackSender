@@ -3,12 +3,17 @@ import { ScheduledMessage } from '../types';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
+// Add a proxy URL for development to bypass CORS
+const useProxy = process.env.NODE_ENV === 'development' && !API_URL.includes('localhost');
+const baseURL = useProxy ? `https://cors-anywhere.herokuapp.com/${API_URL}/api` : `${API_URL}/api`;
+
 const api = axios.create({
-  baseURL: `${API_URL}/api`,
+  baseURL,
   headers: {
     'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
   },
-  withCredentials: true,  // Include credentials in cross-origin requests
+  withCredentials: false,  // Change to false to avoid preflight requests
 });
 
 // Add request interceptor to handle CORS preflight
@@ -18,6 +23,10 @@ api.interceptors.request.use(
     if (!config.headers['Origin']) {
       config.headers['Origin'] = window.location.origin;
     }
+    
+    // Add CORS headers for all requests
+    config.headers['Access-Control-Allow-Origin'] = '*';
+    
     return config;
   },
   (error) => Promise.reject(error)
