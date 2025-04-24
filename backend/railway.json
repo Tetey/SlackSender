@@ -1,13 +1,11 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
-    "builder": "DOCKERFILE",
-    "dockerfilePath": "Dockerfile",
-    "buildCommand": null
+    "builder": "NIXPACKS",
+    "buildCommand": "python -m pip install -r requirements.txt && python manage.py collectstatic --noinput"
   },
   "deploy": {
-    "numReplicas": 1,
-    "startCommand": null,
+    "startCommand": "python manage.py migrate && python -m gunicorn core.wsgi:application --bind 0.0.0.0:$PORT",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }
