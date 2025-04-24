@@ -8,7 +8,20 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,  // Include credentials in cross-origin requests
 });
+
+// Add request interceptor to handle CORS preflight
+api.interceptors.request.use(
+  (config) => {
+    // Ensure the Origin header is set properly
+    if (!config.headers['Origin']) {
+      config.headers['Origin'] = window.location.origin;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 export const messageService = {
   getMessages: async (): Promise<ScheduledMessage[]> => {
