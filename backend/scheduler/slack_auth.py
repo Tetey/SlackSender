@@ -22,8 +22,9 @@ state_store = FileOAuthStateStore(expiration_seconds=300, base_dir='slack_state'
 
 # Use ngrok URL for local development, production URL for production
 if settings.DEBUG:
-    # Local development with ngrok
-    BASE_URL = "https://cb4b-124-217-62-119.ngrok-free.app"
+    # For local development, use the URL from the request
+    # This allows the callback URL to work regardless of the ngrok URL
+    BASE_URL = None  # Will be set dynamically based on the request
 else:
     # Production environment
     BASE_URL = "https://slacksender-production.up.railway.app"
@@ -33,7 +34,13 @@ def get_authorize_url(request):
     Generate a Slack OAuth authorization URL
     """
     # Use the appropriate URL based on environment
-    redirect_uri = f"{BASE_URL}/api/slack/oauth-callback/"
+    if settings.DEBUG:
+        # In debug mode, use the request's host for the redirect URI
+        # This ensures the callback URL matches what's in the request
+        redirect_uri = request.build_absolute_uri('/api/slack/oauth-callback/')
+    else:
+        # In production, use the fixed BASE_URL
+        redirect_uri = f"{BASE_URL}/api/slack/oauth-callback/"
     
     authorize_url_generator = AuthorizeUrlGenerator(
         client_id=settings.SLACK_CLIENT_ID,
@@ -73,7 +80,13 @@ def handle_oauth_callback(request):
     
     try:
         # Use the appropriate URL based on environment
-        redirect_uri = f"{BASE_URL}/api/slack/oauth-callback/"
+        if settings.DEBUG:
+            # In debug mode, use the request's host for the redirect URI
+            # This ensures the callback URL matches what's in the request
+            redirect_uri = request.build_absolute_uri('/api/slack/oauth-callback/')
+        else:
+            # In production, use the fixed BASE_URL
+            redirect_uri = f"{BASE_URL}/api/slack/oauth-callback/"
         
         # Complete the OAuth flow
         oauth_response = client.oauth_v2_access(
