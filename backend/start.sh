@@ -46,3 +46,8 @@ fi
 # Start Django server
 echo "Starting Django server..."
 python manage.py runserver 0.0.0.0:$PORT
+
+# Note: Celery worker and beat processes are started separately by Railway
+# based on the Procfile configuration:
+# worker: celery -A core worker --loglevel=info
+# beat: celery -A core beat --loglevel=info
