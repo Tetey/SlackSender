@@ -10,12 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-import os
 from pathlib import Path
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,24 +21,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dum3dlerg+@%zw$!$+aoh270xkx_^=&ufnqc^nzr(-r%*81_ym')
+SECRET_KEY = 'django-insecure-dum3dlerg+@%zw$!$+aoh270xkx_^=&ufnqc^nzr(-r%*81_ym'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+DEBUG = True
 
-# Get the Railway-provided URL or use localhost
-RAILWAY_STATIC_URL = os.getenv('RAILWAY_STATIC_URL', '')
-RAILWAY_DOMAIN = os.getenv('RAILWAY_PUBLIC_DOMAIN', '')
-
-ALLOWED_HOSTS = [
-    'localhost',
-    '127.0.0.1',
-    'slacksender-production.up.railway.app',
-    '.up.railway.app',  # Allow all Railway subdomains
-]
-
-if RAILWAY_DOMAIN:
-    ALLOWED_HOSTS.append(RAILWAY_DOMAIN)
+ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -58,19 +42,15 @@ INSTALLED_APPS = [
     # Third party apps
     'rest_framework',
     'corsheaders',
-    'django_celery_beat',  # Add django_celery_beat to installed apps
-    'whitenoise',  # Add whitenoise to installed apps
     
     # Local apps
     'scheduler',
-    'celery',  # Add celery to installed apps
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add whitenoise middleware
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # CORS middleware
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -101,23 +81,21 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# Get database URL from environment variable (provided by Railway)
-DATABASE_URL = os.getenv('DATABASE_URL')
+# Use persistent storage on Railway
+RAILWAY_DATA_DIR = os.environ.get('RAILWAY_VOLUME_MOUNT_PATH', '')
 
-if DATABASE_URL:
-    # Running on Railway with PostgreSQL
-    import dj_database_url
-    DATABASES = {
-        'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
-    }
+# If running on Railway with persistent storage, use that for SQLite
+if RAILWAY_DATA_DIR:
+    SQLITE_DB_PATH = os.path.join(RAILWAY_DATA_DIR, 'db.sqlite3')
 else:
-    # Local development with SQLite
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
+    SQLITE_DB_PATH = BASE_DIR / 'db.sqlite3'
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': SQLITE_DB_PATH,
     }
+}
 
 
 # Password validation
@@ -155,37 +133,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-# Create static files directory if it doesn't exist
-os.makedirs(STATIC_ROOT, exist_ok=True)
-
-# Configure static files for Railway deployment
-if RAILWAY_STATIC_URL:
-    STATIC_URL = RAILWAY_STATIC_URL
 
 # CORS settings
-CORS_ALLOW_ALL_ORIGINS = True  # Allow all origins
+CORS_ALLOW_ALL_ORIGINS = True  # For development only, restrict in production
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_METHODS = [
-    'DELETE',
-    'GET',
-    'OPTIONS',
-    'PATCH',
-    'POST',
-    'PUT',
-]
-CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
-]
 
 # REST Framework settings
 REST_FRAMEWORK = {
@@ -196,24 +147,6 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
     ],
 }
-
-# Slack API settings
-SLACK_BOT_TOKEN = os.getenv('SLACK_BOT_TOKEN', '')
-SLACK_SIGNING_SECRET = os.getenv('SLACK_SIGNING_SECRET', '')
-SLACK_CLIENT_ID = os.getenv('SLACK_CLIENT_ID', '')
-SLACK_CLIENT_SECRET = os.getenv('SLACK_CLIENT_SECRET', '')
-SLACK_REFRESH_TOKEN = os.getenv('SLACK_REFRESH_TOKEN', '')
-
-# Celery Configuration
-CELERY_BROKER_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
-CELERY_RESULT_BACKEND = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = TIME_ZONE
-
-# Celery Beat Settings
-CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
