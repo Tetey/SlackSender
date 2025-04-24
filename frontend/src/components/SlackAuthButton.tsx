@@ -3,7 +3,6 @@ import axios from 'axios';
 
 // Use environment variable with fallback
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-const SLACK_CLIENT_ID = process.env.REACT_APP_SLACK_CLIENT_ID;
 
 const SlackAuthButton: React.FC = () => {
   const [authUrl, setAuthUrl] = useState<string>('');
@@ -14,9 +13,9 @@ const SlackAuthButton: React.FC = () => {
     const fetchAuthUrl = async () => {
       try {
         setIsLoading(true);
-        // In a real application, we would fetch the auth URL from the backend
-        // For now, we'll just use the API endpoint directly
-        setAuthUrl(`${API_BASE_URL}/api/slack/auth/`);
+        // Fetch the auth URL from the backend
+        const response = await axios.get(`${API_BASE_URL}/api/slack/auth-url/`);
+        setAuthUrl(response.data.url);
         setError(null);
       } catch (err) {
         console.error('Error fetching Slack auth URL:', err);
@@ -31,8 +30,11 @@ const SlackAuthButton: React.FC = () => {
 
   const handleAuth = () => {
     // Redirect to Slack OAuth page
-    const slackAuthUrl = `https://slack.com/oauth/v2/authorize?client_id=${SLACK_CLIENT_ID}&scope=chat:write,channels:read,groups:read&redirect_uri=${API_BASE_URL}/api/slack/oauth-callback/`;
-    window.location.href = slackAuthUrl;
+    if (authUrl) {
+      window.location.href = authUrl;
+    } else {
+      setError('Authentication URL not available. Please try again later.');
+    }
   };
 
   if (isLoading) {

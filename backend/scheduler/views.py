@@ -2,10 +2,11 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.shortcuts import redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.views import View
+from django.conf import settings
 
 from .models import ScheduledMessage
 from .serializers import ScheduledMessageSerializer
@@ -104,6 +105,23 @@ class SlackAuthView(View):
         """
         authorize_url, _ = get_authorize_url(request)
         return redirect(authorize_url)
+
+
+class SlackAuthUrlView(View):
+    """
+    View to provide the Slack auth URL to the frontend
+    """
+    def get(self, request):
+        """
+        Return the Slack auth URL as JSON
+        """
+        client_id = settings.SLACK_CLIENT_ID
+        redirect_uri = request.build_absolute_uri('/api/slack/oauth-callback/')
+        scope = 'chat:write,channels:read,groups:read'
+        
+        auth_url = f"https://slack.com/oauth/v2/authorize?client_id={client_id}&scope={scope}&redirect_uri={redirect_uri}"
+        
+        return JsonResponse({'url': auth_url})
 
 
 @method_decorator(csrf_exempt, name='dispatch')
