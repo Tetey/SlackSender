@@ -30,11 +30,19 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dum3dlerg+@%zw$!$+aoh270xk
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
+# Get the Railway-provided URL or use localhost
+RAILWAY_STATIC_URL = os.getenv('RAILWAY_STATIC_URL', '')
+RAILWAY_DOMAIN = os.getenv('RAILWAY_PUBLIC_DOMAIN', '')
+
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     'slacksender-production.up.railway.app',
+    '.up.railway.app',  # Allow all Railway subdomains
 ]
+
+if RAILWAY_DOMAIN:
+    ALLOWED_HOSTS.append(RAILWAY_DOMAIN)
 
 
 # Application definition
@@ -51,6 +59,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'django_celery_beat',  # Add django_celery_beat to installed apps
+    'whitenoise',  # Add whitenoise to installed apps
     
     # Local apps
     'scheduler',
@@ -59,6 +68,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add whitenoise middleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -139,18 +149,32 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # Create static files directory if it doesn't exist
 os.makedirs(STATIC_ROOT, exist_ok=True)
 
-# CORS settings
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'https://slack-sender-pi.vercel.app',
-    'https://slacksender-production.up.railway.app',
-]
-CORS_ALLOW_CREDENTIALS = True
+# Configure static files for Railway deployment
+if RAILWAY_STATIC_URL:
+    STATIC_URL = RAILWAY_STATIC_URL
 
-# For development, you can also allow all origins
-if DEBUG:
-    CORS_ALLOW_ALL_ORIGINS = True
+# CORS settings
+CORS_ALLOW_ALL_ORIGINS = True  # Allow all origins
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 # REST Framework settings
 REST_FRAMEWORK = {
