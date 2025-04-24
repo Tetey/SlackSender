@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-// This can be updated to your ngrok URL when testing with Slack
-const API_BASE_URL = 'https://cb4b-124-217-62-119.ngrok-free.app';
+// Use environment variable with fallback
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const SLACK_CLIENT_ID = process.env.REACT_APP_SLACK_CLIENT_ID;
 
 const SlackAuthButton: React.FC = () => {
   const [authUrl, setAuthUrl] = useState<string>('');
@@ -29,32 +30,45 @@ const SlackAuthButton: React.FC = () => {
   }, []);
 
   const handleAuth = () => {
-    // Open the Slack authorization page in a new window
-    window.open(authUrl, '_blank', 'width=800,height=600');
+    // Redirect to Slack OAuth page
+    const slackAuthUrl = `https://slack.com/oauth/v2/authorize?client_id=${SLACK_CLIENT_ID}&scope=chat:write,channels:read,groups:read&redirect_uri=${API_BASE_URL}/api/slack/oauth-callback/`;
+    window.location.href = slackAuthUrl;
   };
 
   if (isLoading) {
-    return <div className="text-center">Loading Slack authentication...</div>;
+    return <div>Loading...</div>;
   }
 
   if (error) {
-    return (
-      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-        {error}
-      </div>
-    );
+    return <div className="text-red-500">{error}</div>;
   }
 
   return (
     <button
       onClick={handleAuth}
-      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[#4A154B] hover:bg-[#611f69] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4A154B]"
+      className="bg-[#4A154B] hover:bg-[#611f69] text-white font-bold py-2 px-4 rounded flex items-center"
     >
-      <svg className="h-5 w-5 mr-2" viewBox="0 0 54 54" xmlns="http://www.w3.org/2000/svg">
-        <path d="M19.712.133a5.381 5.381 0 0 0-5.376 5.387 5.381 5.381 0 0 0 5.376 5.386h5.376V5.52A5.381 5.381 0 0 0 19.712.133m0 14.365H5.376A5.381 5.381 0 0 0 0 19.884a5.381 5.381 0 0 0 5.376 5.387h14.336a5.381 5.381 0 0 0 5.376-5.387 5.381 5.381 0 0 0-5.376-5.386" fill="#36C5F0" />
-        <path d="M53.76 19.884a5.381 5.381 0 0 0-5.376-5.386 5.381 5.381 0 0 0-5.376 5.386v5.387h5.376a5.381 5.381 0 0 0 5.376-5.387m-14.336 0V5.52A5.381 5.381 0 0 0 34.048.133a5.381 5.381 0 0 0-5.376 5.387v14.364a5.381 5.381 0 0 0 5.376 5.387 5.381 5.381 0 0 0 5.376-5.387" fill="#2EB67D" />
-        <path d="M34.048 54a5.381 5.381 0 0 0 5.376-5.387 5.381 5.381 0 0 0-5.376-5.386h-5.376v5.386A5.381 5.381 0 0 0 34.048 54m0-14.365h14.336a5.381 5.381 0 0 0 5.376-5.386 5.381 5.381 0 0 0-5.376-5.387H34.048a5.381 5.381 0 0 0-5.376 5.387a5.381 5.381 0 0 0 5.376 5.386" fill="#ECB22E" />
-        <path d="M0 34.249a5.381 5.381 0 0 0 5.376 5.386 5.381 5.381 0 0 0 5.376-5.386v-5.387H5.376A5.381 5.381 0 0 0 0 34.25m14.336-.001v14.364A5.381 5.381 0 0 0 19.712 54a5.381 5.381 0 0 0 5.376-5.387V34.25a5.381 5.381 0 0 0-5.376-5.387a5.381 5.381 0 0 0-5.376 5.387" fill="#E01E5A" />
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 122.8 122.8"
+        className="h-5 w-5 mr-2"
+      >
+        <path
+          d="M25.8 77.6c0 7.1-5.8 12.9-12.9 12.9S0 84.7 0 77.6s5.8-12.9 12.9-12.9h12.9v12.9zm6.5 0c0-7.1 5.8-12.9 12.9-12.9s12.9 5.8 12.9 12.9v32.3c0 7.1-5.8 12.9-12.9 12.9s-12.9-5.8-12.9-12.9V77.6z"
+          fill="#e01e5a"
+        />
+        <path
+          d="M45.2 25.8c-7.1 0-12.9-5.8-12.9-12.9S38.1 0 45.2 0s12.9 5.8 12.9 12.9v12.9H45.2zm0 6.5c7.1 0 12.9 5.8 12.9 12.9s-5.8 12.9-12.9 12.9H12.9C5.8 58.1 0 52.3 0 45.2s5.8-12.9 12.9-12.9h32.3z"
+          fill="#36c5f0"
+        />
+        <path
+          d="M97 45.2c0-7.1 5.8-12.9 12.9-12.9s12.9 5.8 12.9 12.9-5.8 12.9-12.9 12.9H97V45.2zm-6.5 0c0 7.1-5.8 12.9-12.9 12.9s-12.9-5.8-12.9-12.9V12.9C64.7 5.8 70.5 0 77.6 0s12.9 5.8 12.9 12.9v32.3z"
+          fill="#2eb67d"
+        />
+        <path
+          d="M77.6 97c7.1 0 12.9 5.8 12.9 12.9s-5.8 12.9-12.9 12.9-12.9-5.8-12.9-12.9V97h12.9zm0-6.5c-7.1 0-12.9-5.8-12.9-12.9s5.8-12.9 12.9-12.9h32.3c7.1 0 12.9 5.8 12.9 12.9s-5.8 12.9-12.9 12.9H77.6z"
+          fill="#ecb22e"
+        />
       </svg>
       Connect with Slack
     </button>
